@@ -66,7 +66,9 @@ def spring():
             for i in range(len(movie)):
                 time = movie[i]["playStartTime"]
                 seats = movie[i]["restSeatCnt"]
-                tuple = (time, seats)
+                playkind = movie[i]["playKindNm"]
+                playSchdlNo = movie[i]["playSchdlNo"]
+                tuple = (time, seats, playkind, playSchdlNo)
                 tuples.append(tuple)
             
             dic[movie_th] = tuples

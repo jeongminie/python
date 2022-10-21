@@ -62,7 +62,7 @@ def get_time_table(movies):
         # print(movie_th)
         dic[movie_th] = tuples
     
-    print(dic)
+    # print(dic)
 
     return dic
 
@@ -82,7 +82,8 @@ def split_movies_by_no(response):
         # for i in z:
 	    #     print(i, end = ', ')
 
-        # dic[title] = timetable
+        dic[(title, movie_no)] = timetable
+    print(dic)
 
     
         
