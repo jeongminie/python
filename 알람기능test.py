@@ -1,0 +1,126 @@
+import sched
+import requests
+import pymysql
+import telegram
+import datetime as dt
+from apscheduler.schedulers.background import BackgroundScheduler
+import time
+import json
+import sys
+from sdk.api.message import Message
+from sdk.exceptions import CoolsmsException
+
+def test():
+    schedule()
+
+
+def schedule():
+    # token = "5648875021:AAEsc8Q86tJhk4hwu2ohLmGQD9gpeYKPRJI"
+    # id = "5669537551"
+    # bot = telegram.Bot(token)
+
+    api_key = "NCSRFMHDTQYIKPZP"
+    api_secret = "PXNQNRPPTFIG6HTWL6XOH5GTC34SKDLV"
+
+    params = dict()
+    params['type'] = 'sms' # Message type ( sms, lms, mms, ata )
+    params['to'] = '01025116861' # Recipients Number '01000000000,01000000001'
+    params['from'] = '01025116861' # Sender number
+
+    conn = pymysql.connect(host="database-1.cxva4q1y2ban.ap-northeast-2.rds.amazonaws.com",
+                       port=33062,
+                       user="root",
+                       password="dhrtms80",
+                       db="movie",
+                       charset = "utf8")
+
+    sql = "SELECT * FROM openAlarm WHERE state = 1"
+    sql2 = "UPDATE openAlarm SET state = 0"
+
+    global brchNo
+    global rpstMovieNo
+    global theabKindCd
+    global playDe
+
+    cur = conn.cursor()
+
+    cur.execute(sql)
+    result = cur.fetchall()
+    for data in result:
+        brchNo = data[1]
+        rpstMovieNo = data[2]
+        theabKindCd = data[4]
+        playDe = data[5]
+        state = data[6]
+
+    today = dt.datetime.now().strftime('%Y%m%d')
+
+    url = "https://www.megabox.co.kr/on/oh/ohc/Brch/schedulePage.do"
+    parameters = {
+        "masterType": "brch",
+        "detailType": "spcl",
+        "theabKindCd": theabKindCd,
+        "brchNo": brchNo,
+        "firstAt": "N",
+        "brchNo1": brchNo,
+        "spclbYn1": "Y",
+        "theabKindCd1": "DBC",
+        "crtDe": today,
+        "playDe": playDe
+    }
+
+    response = requests.post(url, data = parameters).json()
+
+    movie_response = response['megaMap']['movieFormList']
+
+    # dt_datetime = dt.datetime.strptime(playDe,'%Y%m%d')
+    # print(dt_datetime)
+    # print(dt_datetime+dt.timedelta(days=1))
+    # print(dt_datetime < dt_datetime+dt.timedelta(days=1))
+
+    # if dt_datetime < dt_datetime+dt.timedelta(days=1):
+    #     cur.execute(sql2)
+
+    # print(movie_response)
+    test = []
+    print(len(result))
+    if (len(result)) >= 1:
+        for item in movie_response:
+            if str(rpstMovieNo) == item["rpstMovieNo"]:
+                playSchdlNo = item["playSchdlNo"]
+                if playSchdlNo not in test:
+                    test.append(playSchdlNo)
+
+        for item in movie_response:
+            if test[-1] == item["playSchdlNo"]:
+                # bot.sendMessage(chat_id=id, text=item["movieNm"] + "(" + item["playStartTime"] + ")" +" Dolby 예매(" + item["brchNm"] + ")가 열렸습니다")
+                params['text'] = item["movieNm"] + "(" + item["playStartTime"] + ")" +" Dolby 예매(" + item["brchNm"].replace('&#40;', '(').replace('&#41;', ')') + ")가 열렸습니다" # Message
+                cur.execute(sql2)
+                sched.pause()
+
+        sched.resume()
+
+    cool = Message(api_key, api_secret)
+    try:
+        response = cool.send(params)
+        print("Success Count : %s" % response['success_count'])
+        print("Error Count : %s" % response['error_count'])
+        print("Group ID : %s" % response['group_id'])
+
+        if "error_list" in response:
+            print("Error List : %s" % response['error_list'])
+
+    except CoolsmsException as e:
+        print("Error Code : %s" % e.code)
+        print("Error Message : %s" % e.msg)
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+
+sched = BackgroundScheduler(timezone='Asia/Seoul')
+sched.start()
+sched.add_job(schedule, 'interval', seconds=10, id="test1")
+
+while True:
+    time.sleep(1)

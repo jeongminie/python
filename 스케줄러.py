@@ -1,7 +1,18 @@
-from time import time
+from flask import Flask, render_template, redirect, jsonify, url_for
+from flask import request
+from turtle import title
 import requests
 from bs4 import BeautifulSoup
 from collections import ChainMap
+import json
+from apscheduler.schedulers.background import BackgroundScheduler
+import telegram
+import datetime
+
+token = "5648875021:AAEsc8Q86tJhk4hwu2ohLmGQD9gpeYKPRJI"
+id = "5669537551"
+ 
+bot = telegram.Bot(token)
 
 url = "https://www.megabox.co.kr/on/oh/ohc/Brch/schedulePage.do"
 parameters = {
@@ -13,8 +24,9 @@ parameters = {
 "crtDe": "20220903",
 "playDe": "20220903"
 }
-    
+
 dic = {}
+dic2 = {}
 
 response = requests.post(url, data = parameters).json()
 
@@ -23,66 +35,58 @@ movie_response = response['megaMap']['movieFormList']
 def get_movie_no_list(response) :
     movie_no_list = []
     for item in response:
-        movie_no = item["movieNo"]
+        movie_no = item["rpstMovieNo"]
         if movie_no not in movie_no_list:
             movie_no_list.append(movie_no)
-
-    # print(movie_no_list)
-
     return movie_no_list
 
 def get_time_table(movies):
     movie_th_list = []
 
     for item in movies:
-        thea = item["theabEngNm"]
+        thea = item["theabNo"].replace("0", "")
         if thea not in movie_th_list:
             movie_th_list.append(thea)
-    # print(movie_th_list)
-       
+    
     th_list = movie_th_list
-    # print(th_list)
 
     dic={}
 
     for movie_th in th_list:
         
-        movie = [item for item in movies if item["theabEngNm"] == movie_th]
-        # print(movie)
-        # dic = movie_th
-        # print(dic)
+        movie = [item for item in movies if item["theabNo"].replace("0", "") == movie_th]
+        
         tuples = []
         for i in range(len(movie)):
             time = movie[i]["playStartTime"]
             seats = movie[i]["restSeatCnt"]
-            # print(time ,seats)
-            tuple = (time, seats)
+            playkind = movie[i]["playKindNm"]
+            playSchdlNo = movie[i]["playSchdlNo"]
+            tuple = (time, seats, playkind, playSchdlNo)
             tuples.append(tuple)
-        # print(tuples)
-        # print(movie_th)
+        
         dic[movie_th] = tuples
     
-    # print(dic)
-
     return dic
 
 def split_movies_by_no(response):
     movie_no_list = get_movie_no_list(response)
-    
     for movie_no in movie_no_list:
-        #print(movie_no)
-        movies = [item for item in response if item["movieNo"] == movie_no]
-        #print(movies)
+        movies = [item for item in response if item["rpstMovieNo"] == movie_no]
         title = movies[0]["movieNm"].replace('&#40;', '(').replace('&#41;', ')')
-        #print(title)
-
         timetable = get_time_table(movies)
+        dic[title] = timetable
         
-        # z = zip([title],[timetable]) 
-        # for i in z:
-	    #     print(i, end = ', ')
-
-        dic[(title, movie_no)] = timetable
-    print(dic)
-
+    # print(dic, "\n")
 split_movies_by_no(movie_response)
+
+def check():
+    any(key in 'Dolby' for key in dic['블랙 아담'])
+    for i in dic['블랙 아담']:
+       any(key in 'Dolby' for key in dic['블랙 아담'][i])
+    # for key,val in dic.items():
+    #     if '블랙아담'.replace(' ','') in key.replace(' ',''):
+    #         print({key:val    })
+
+check()
+

@@ -1,65 +1,37 @@
 from flask import Flask, render_template, redirect, jsonify, url_for
 from flask import request
-import urllib.request
+from turtle import title
 import requests
 from bs4 import BeautifulSoup
+from collections import ChainMap
 import json
-import pymysql
+from apscheduler.schedulers.background import BackgroundScheduler
 import telegram
-import datetime as dt
-from apscheduler.schedulers.blocking import BlockingScheduler
+import datetime
+
+# token = "5648875021:AAEsc8Q86tJhk4hwu2ohLmGQD9gpeYKPRJI"
+# id = "5669537551"
+ 
+# bot = telegram.Bot(token)
 
 app = Flask(__name__)
+@app.route("/dd", methods=['GET','POST'])
 
-@app.route("/movieNo", methods=['GET', 'POST'])
-def MovieNo():
-    movieNm = request.form['movieNm']
-
-    url = "https://www.megabox.co.kr/on/oh/oha/Movie/selectMovieList.do"
-    parameters = {
-    "currentPage": "1",
-    "recordCountPerPage": "100",
-    "pageType": "ticketing",
-    "ibxMovieNmSearch": movieNm,
-    "onairYn": "Y",
-    "specialType": "",
-    "specialYn": "N"
-    }
-
-    response = requests.post(url, data = parameters).json()
-
-    movie_response = response['movieList']
-
-    for movie in movie_response:
-        rpstMovieNo = movie["rpstMovieNo"]
-
-    return json.dumps(rpstMovieNo, ensure_ascii=False)
-
-@app.route("/tospring", methods=['POST'])
-
-# def connect():
-#     date = request.form['date']
-#     print(date)
-
-#     return jsonify({'result':'success'})
-
-def spring():
-    date = request.form['date']
-    brchNo = request.form['brchNo']
-    print(date)
-    print(brchNo)
+def test():
+    movieNo = request.form['movieNo']
+    print(movieNo)
 
     url = "https://www.megabox.co.kr/on/oh/ohc/Brch/schedulePage.do"
     parameters = {
     "masterType": "brch",
     "detailType": "area",
-    "brchNo": brchNo,
+    "brchNo": "0019",
     "firstAt": "N",
-    "brchNo1": brchNo,
-    "crtDe": date,
-    "playDe": date
+    "brchNo1": "0019",
+    "crtDe": "20220903",
+    "playDe": "20220903"
     }
-    
+
     dic = {}
 
     response = requests.post(url, data = parameters).json()
@@ -72,24 +44,21 @@ def spring():
             movie_no = item["rpstMovieNo"]
             if movie_no not in movie_no_list:
                 movie_no_list.append(movie_no)
-            print(movie_no_list)
         return movie_no_list
 
     def get_time_table(movies):
         movie_th_list = []
 
         for item in movies:
-            thea = item["theabExpoNm"]
+            thea = item["theabNo"].replace("0", "")
             if thea not in movie_th_list:
                 movie_th_list.append(thea)
         
         th_list = movie_th_list
 
-        dic={}
-
         for movie_th in th_list:
             
-            movie = [item for item in movies if item["theabExpoNm"] == movie_th]
+            movie = [item for item in movies if item["theabNo"].replace("0", "") == movie_th]
             
             tuples = []
             for i in range(len(movie)):
@@ -97,9 +66,7 @@ def spring():
                 seats = movie[i]["restSeatCnt"]
                 playkind = movie[i]["playKindNm"]
                 playSchdlNo = movie[i]["playSchdlNo"]
-                theabNo = movie[i]["theabNo"]
-                admisClassCdNm = movie[i]["admisClassCdNm"]
-                tuple = (time, seats, playkind, playSchdlNo, theabNo, admisClassCdNm)
+                tuple = (time, seats, playkind, playSchdlNo)
                 tuples.append(tuple)
             
             dic[movie_th] = tuples
@@ -114,12 +81,10 @@ def spring():
             timetable = get_time_table(movies)
             dic[title] = timetable
             
-        print(dic, "\n")
-
+        # print(dic, "\n")
     split_movies_by_no(movie_response)
 
     return json.dumps(dic, ensure_ascii=False)
-    #render = render_template('test.html', data=dic)
-    
+
 if __name__ == '__main__':
     app.run(debug=True,host="127.0.0.1",port=5000)
