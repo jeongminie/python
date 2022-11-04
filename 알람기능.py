@@ -22,11 +22,6 @@ def schedule():
     api_key = "NCSRFMHDTQYIKPZP"
     api_secret = "PXNQNRPPTFIG6HTWL6XOH5GTC34SKDLV"
 
-    params = dict()
-    params['type'] = 'sms' # Message type ( sms, lms, mms, ata )
-    params['to'] = '01025116861' # Recipients Number '01000000000,01000000001'
-    params['from'] = '01025116861' # Sender number
-
     conn = pymysql.connect(host="database-1.cxva4q1y2ban.ap-northeast-2.rds.amazonaws.com",
                        port=33062,
                        user="root",
@@ -41,6 +36,7 @@ def schedule():
     global rpstMovieNo
     global theabKindCd
     global playDe
+    global phone
 
     cur = conn.cursor()
 
@@ -49,9 +45,15 @@ def schedule():
     for data in result:
         brchNo = data[1]
         rpstMovieNo = data[2]
-        theabKindCd = data[4]
+        theabKindCd = data[3]
+        phone = data[4]
         playDe = data[5]
         state = data[6]
+
+    params = dict()
+    params['type'] = 'sms' # Message type ( sms, lms, mms, ata )
+    params['to'] = phone # Recipients Number '01000000000,01000000001'
+    params['from'] = '01025116861' # Sender number
 
     today = dt.datetime.now().strftime('%Y%m%d')
 
