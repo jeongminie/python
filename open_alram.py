@@ -60,7 +60,7 @@ def schedule():
             "firstAt": "N",
             "brchNo1": brchNo,
             "spclbYn1": "Y",
-            "theabKindCd1": "DBC",
+            "theabKindCd1": theabKindCd,
             "crtDe": today,
             "playDe": playDe
         }
@@ -79,8 +79,8 @@ def schedule():
                         arr.append(playSchdlNo)
 
             for item in movie_response:
-                if arr[-1] == item["playSchdlNo"] and theabKindCd == item["theabKindCd"]:
-                    params['text'] = item["movieNm"] + "(" + item["playStartTime"] + ")" + item["theabExpoNm"] + " 예매(" + item["brchNm"].replace('&#40;', '(').replace('&#41;', ')') + ")가 열렸습니다" # Message
+                if arr[-1] == item["playSchdlNo"]:
+                    params['text'] = item["movieNm"] + "(" + item["playStartTime"] + ") " + item["theabExpoNm"] + " 예매(" + item["brchNm"].replace('&#40;', '(').replace('&#41;', ')') + ")가 열렸습니다" # Message
                     cur.execute(sql2)
                     sched.pause()
 
