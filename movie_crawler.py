@@ -1,11 +1,8 @@
-from flask import Flask, render_template, redirect, jsonify, url_for
+from flask import Flask
 from flask import request
-import urllib.request
 import requests
 from bs4 import BeautifulSoup
 import json
-import pymysql
-import telegram
 import datetime as dt
 from apscheduler.schedulers.blocking import BlockingScheduler
 
