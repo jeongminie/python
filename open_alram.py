@@ -84,7 +84,7 @@ def schedule():
             if (len(arr)) != 0:
                 for item in movie_response:
                     if arr[-1] == item["playSchdlNo"]:
-                        params['text'] = item["movieNm"] + "(" + item["playStartTime"] + ") " + item["theabExpoNm"] + " 예매(" + item["brchNm"].replace('&#40;', '(').replace('&#41;', ')') + ")가 열렸습니다" # Message
+                        params['text'] = item["movieNm"] + "(" + playDe[4:6] +"/"+ playDe[6:8] + ") " + item["theabExpoNm"] + "(" + item["brchNm"].replace('&#40;', '(').replace('&#41;', ')') + ") 예매가 열렸습니다" # Message
                         cur.execute(sql2, seq)
                         sched.pause()
                     
@@ -110,7 +110,7 @@ def schedule():
 
 sched = BackgroundScheduler(timezone='Asia/Seoul')
 sched.start()
-sched.add_job(schedule, 'interval', seconds=10, id="test1")
+sched.add_job(schedule, 'interval', seconds=30, id="test1")
 
 while True:
     time.sleep(1)
