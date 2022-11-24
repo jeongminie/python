@@ -11,14 +11,18 @@ app = Flask(__name__)
 @app.route("/movieNo", methods=['GET', 'POST'])
 def MovieNo():
     movieNm = request.form['movieNm']
+    pageType = request.form['pageType']
+    onairYn = request.form['onairYn']
+    print(pageType)
+    print(onairYn)
 
     url = "https://www.megabox.co.kr/on/oh/oha/Movie/selectMovieList.do"
     parameters = {
     "currentPage": "1",
     "recordCountPerPage": "100",
-    "pageType": "ticketing",
-    "ibxMovieNmSearch": movieNm,
-    "onairYn": "Y",
+    "pageType": pageType,
+    "ibxMovieNmSearch": "",
+    "onairYn": onairYn,
     "specialType": "",
     "specialYn": "N"
     }
@@ -28,7 +32,8 @@ def MovieNo():
     movie_response = response['movieList']
 
     for movie in movie_response:
-        rpstMovieNo = movie["rpstMovieNo"]
+        if movie["movieNm"] == movieNm:
+            rpstMovieNo = movie["rpstMovieNo"]
 
     return json.dumps(rpstMovieNo, ensure_ascii=False)
 

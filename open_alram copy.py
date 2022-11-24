@@ -28,8 +28,9 @@ def schedule():
                        charset = "utf8")
 
     sql = "SELECT * FROM openAlarm WHERE state = 1"
-    sql2 = "UPDATE openAlarm SET state = 0, updatedAt = now()"
+    sql2 = "UPDATE openAlarm SET state = 0 WHERE seq = %s, updatedAt = now()"
 
+    global seq
     global brchNo
     global rpstMovieNo
     global theabKindCd
@@ -42,6 +43,7 @@ def schedule():
     result = cur.fetchall()
     
     for data in result:
+        seq = data[0]
         brchNo = data[2]
         rpstMovieNo = data[3]
         theabKindCd = data[5]
@@ -87,7 +89,7 @@ def schedule():
                 if arr[-1] == item["playSchdlNo"]:
                     # bot.sendMessage(chat_id=id, text=item["movieNm"] + "(" + item["playStartTime"] + ")" +" Dolby 예매(" + item["brchNm"] + ")가 열렸습니다")
                     params['text'] = item["movieNm"] + "(" + item["playStartTime"] + ")" +" Dolby 예매(" + item["brchNm"].replace('&#40;', '(').replace('&#41;', ')') + ")가 열렸습니다" # Message
-                    cur.execute(sql2)
+                    cur.execute(sql2, (seq))
                     sched.pause()
 
             sched.resume()

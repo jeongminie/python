@@ -10,7 +10,6 @@ from sdk.exceptions import CoolsmsException
 def test():
     schedule()
 
-
 def schedule():
     api_key = "NCSRFMHDTQYIKPZP"
     api_secret = "PXNQNRPPTFIG6HTWL6XOH5GTC34SKDLV"
@@ -23,8 +22,9 @@ def schedule():
                        charset = "utf8")
 
     sql = "SELECT * FROM openAlarm WHERE state = 1"
-    sql2 = "UPDATE openAlarm SET state = 0, updatedAt = now()"
+    sql2 = "UPDATE openAlarm SET state = 0, updatedAt = now() WHERE seq = (%s)"
 
+    global seq
     global brchNo
     global rpstMovieNo
     global theabKindCd
@@ -37,12 +37,18 @@ def schedule():
     result = cur.fetchall()
     
     for data in result:
+        arr = []
+        arr.clear()
+
+        seq = data[0]
         brchNo = data[2]
         rpstMovieNo = data[3]
         theabKindCd = data[5]
         phone = data[6]
         playDe = data[7]
         state = data[8]
+
+        print("start seq : " + str(seq))
         
         params = dict()
         params['type'] = 'sms' # Message type ( sms, lms, mms, ata )
@@ -69,21 +75,19 @@ def schedule():
 
         movie_response = response['megaMap']['movieFormList']
 
-        arr = []
-
         if (len(result)) >= 1:
             for item in movie_response:
                 if str(rpstMovieNo) == item["rpstMovieNo"]:
                     playSchdlNo = item["playSchdlNo"]
                     if playSchdlNo not in arr:
                         arr.append(playSchdlNo)
-
-            for item in movie_response:
-                if arr[-1] == item["playSchdlNo"]:
-                    params['text'] = item["movieNm"] + "(" + item["playStartTime"] + ") " + item["theabExpoNm"] + " 예매(" + item["brchNm"].replace('&#40;', '(').replace('&#41;', ')') + ")가 열렸습니다" # Message
-                    cur.execute(sql2)
-                    sched.pause()
-
+            if (len(arr)) != 0:
+                for item in movie_response:
+                    if arr[-1] == item["playSchdlNo"]:
+                        params['text'] = item["movieNm"] + "(" + item["playStartTime"] + ") " + item["theabExpoNm"] + " 예매(" + item["brchNm"].replace('&#40;', '(').replace('&#41;', ')') + ")가 열렸습니다" # Message
+                        cur.execute(sql2, seq)
+                        sched.pause()
+                    
             sched.resume()
 
         cool = Message(api_key, api_secret)
@@ -106,7 +110,7 @@ def schedule():
 
 sched = BackgroundScheduler(timezone='Asia/Seoul')
 sched.start()
-sched.add_job(schedule, 'interval', seconds=30, id="test1")
+sched.add_job(schedule, 'interval', seconds=10, id="test1")
 
 while True:
     time.sleep(1)
